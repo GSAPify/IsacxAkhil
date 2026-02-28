@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+*.so
+
+# Virtual Environment
+env_isaacsim/
+venv/
+.env
+
+# Isaac Sim
+_isaac_sim/
+*.usd
+*.usda
+*.usdc
+*.usdz
+!assets/**/*.usd
+!assets/**/*.usda
+!assets/**/*.usdc
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs and caches
+*.log
+.cache/
+logs/
+
+# Data (large files)
+data/raw/
+data/datasets/
+*.onnx
+*.pth
+*.pt
+*.weights
+checkpoints/
+
+# Jupyter
+.ipynb_checkpoints/
