@@ -50,3 +50,7 @@ checkpoints/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Rust
+**/target/
+

@@ -1,0 +1,18 @@
+[package]
+name = "vision-inference"
+version = "0.1.0"
+edition = "2021"
+description = "ONNX Runtime inference node for exported vision models"
+
+[[bin]]
+name = "vision-inference"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+image = "0.25"
+ndarray = "0.17"
+ort = "2.0.0-rc.12"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

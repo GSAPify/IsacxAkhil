@@ -1,4 +1,4 @@
-"""
+﻿"""
 GPU stress test with real-time performance monitoring.
 Runs a ResNet50 training loop on synthetic data and prints live GPU stats.
 """
@@ -73,7 +73,7 @@ def run_stress_test():
     device = torch.device("cuda")
     props = torch.cuda.get_device_properties(device)
     print(f"\n  Device       : {props.name}")
-    print(f"  VRAM         : {props.total_mem / 1024**3:.1f} GB")
+    print(f"  VRAM         : {props.total_memory / 1024**3:.1f} GB")
     print(f"  SM Count     : {props.multi_processor_count}")
     print(f"  CUDA Cores   : ~{props.multi_processor_count * 128}")
     print(f"  Compute Cap  : {props.major}.{props.minor}")
@@ -164,3 +164,4 @@ def run_stress_test():
 
 if __name__ == "__main__":
     run_stress_test()
+

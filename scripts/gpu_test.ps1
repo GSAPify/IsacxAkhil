@@ -4,7 +4,7 @@
     [int]$Iterations = 200
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 
 function Write-Header {
@@ -116,13 +116,26 @@ function Test-PythonEnvironment {
 
 function Test-TorchCuda {
     param([string]$Python)
-    $check = & $Python -c "import torch; print(f'{torch.cuda.is_available()}|{torch.__version__}|{torch.version.cuda if torch.cuda.is_available() else ''N/A''}')" 2>&1
-    if ($LASTEXITCODE -ne 0) { return $null }
-    $parts = ($check -split "\|")
-    return @{
-        Available = $parts[0] -eq "True"
-        Version   = $parts[1]
-        Cuda      = $parts[2]
+    $pyCode = @"
+import torch
+avail = torch.cuda.is_available()
+ver = torch.__version__
+cuda_ver = torch.version.cuda if avail else 'N/A'
+print(str(avail) + '|' + ver + '|' + cuda_ver)
+"@
+    $tmpFile = [System.IO.Path]::GetTempFileName() -replace '\.tmp$', '.py'
+    $pyCode | Out-File -FilePath $tmpFile -Encoding utf8
+    try {
+        $check = & $Python $tmpFile 2>&1
+        if ($LASTEXITCODE -ne 0) { return $null }
+        $parts = ($check -split "\|")
+        return @{
+            Available = $parts[0] -eq "True"
+            Version   = $parts[1]
+            Cuda      = $parts[2]
+        }
+    } finally {
+        Remove-Item $tmpFile -ErrorAction SilentlyContinue
     }
 }
 
@@ -199,3 +212,4 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host ""
 Write-Host "  All tests passed. GPU is ready." -ForegroundColor Green
 Write-Host ""
+

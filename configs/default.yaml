@@ -30,3 +30,9 @@ camera:
   fov: 60
   position: [1.5, 0.0, 1.2]
   target: [0.0, 0.0, 0.5]
+
+# ONNX export consumed by Rust vision-inference (see rust/crates/vision-inference)
+inference:
+  onnx_path: "models/yolov8n.onnx"
+  imgsz: 640
+  rust_binary: "rust/target/release/vision-inference.exe"
