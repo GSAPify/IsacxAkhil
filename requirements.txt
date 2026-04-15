@@ -1,18 +1,26 @@
 # Isaac Sim (installed separately via NVIDIA index)
 # pip install isaacsim[all,extscache]==5.1.0 --extra-index-url https://pypi.nvidia.com
+#
+# When using the same venv as Isaac Sim, keep numpy at 1.26.0 (isaacsim-kernel pins it).
+# opencv-python 4.11+ may require numpy 2.x — use <4.11 here.
+# ONNX export (scripts/export_yolo_onnx.py) needs these in the venv so Ultralytics does not
+# auto-install into user site-packages.
 
 # Vision / Detection
+numpy==1.26.0
 torch>=2.1.0
 torchvision>=0.16.0
 ultralytics>=8.0.0
-opencv-python>=4.8.0
+opencv-python>=4.8.0,<4.11
+onnx>=1.12.0,<1.17
+onnxslim>=0.1.71
+onnxruntime>=1.16.0
 
 # Tracking
 filterpy>=1.4.5
 scipy>=1.11.0
 
 # Utilities
-numpy>=1.24.0
 pyyaml>=6.0
 pydantic>=2.0
 # Rust inference node + layout: rust/ and docs/VISION_PIPELINE.md
