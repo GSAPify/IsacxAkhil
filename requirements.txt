@@ -7,6 +7,8 @@
 # auto-install into user site-packages.
 
 # Vision / Detection
+# If this installs CPU-only torch on Windows, reinstall torch/torchvision from
+# https://download.pytorch.org/whl/cu126 inside env_isaacsim before training.
 numpy==1.26.0
 torch>=2.1.0
 torchvision>=0.16.0

@@ -37,11 +37,23 @@ Desktop.ini
 # Logs and caches
 *.log
 .cache/
+.pytest_cache/
+.ruff_cache/
 logs/
+runs/
+wandb/
+mlruns/
 
 # Data (large files)
 data/raw/
 data/datasets/
+data/synthetic/
+data/real/
+datasets/
+models/
+outputs/
+artifacts/
+/results/
 *.onnx
 *.pth
 *.pt
