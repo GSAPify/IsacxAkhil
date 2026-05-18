@@ -1,0 +1,38 @@
+[package]
+description = "Minimal headless Isaac Sim app for Week 1 scripted scene smoke tests"
+title = "Robotics Hello World Headless"
+version = "0.1.0"
+
+[dependencies]
+"isaacsim.core.api" = {}
+"isaacsim.core.simulation_manager" = {}
+"isaacsim.core.utils" = {}
+"isaacsim.simulation_app" = {}
+"isaacsim.storage.native" = {}
+"omni.kit.loop-isaac" = {}
+"omni.kit.usd.layers" = {}
+"omni.physx" = {}
+"omni.physics.stageupdate" = {}
+"omni.usd" = {}
+
+[settings.app.exts.folders]
+'++' = [
+    "G:/Robotics/env_isaacsim/Lib/site-packages/isaacsim/exts",
+    "G:/Robotics/env_isaacsim/Lib/site-packages/isaacsim/extscache",
+    "G:/Robotics/env_isaacsim/Lib/site-packages/isaacsim/extsDeprecated",
+    "G:/Robotics/env_isaacsim/Lib/site-packages/isaacsim/apps",
+]
+
+[settings]
+physics.autoPopupSimulationOutputWindow = false
+
+[settings.app]
+vulkan = true
+fastShutdown = true
+file.ignoreUnsavedOnExit = true
+settings.persistent = false
+runLoops.main.rateLimitEnabled = false
+runLoops.main.manualModeEnabled = true
+
+[settings.app.window]
+hideUi = true

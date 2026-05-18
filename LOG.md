@@ -15,3 +15,11 @@ Append-only daily/session log for the robotics perception project. Keep entries 
 - Verified `torch.cuda.is_available()` is `True` on the NVIDIA GeForce RTX 4070 SUPER.
 - Verified `pip check` reports no broken requirements.
 - Committed the repository setup locally; GitHub push is blocked until SSH or HTTPS credentials are available on this machine.
+
+## 2026-05-19
+
+- Started Week 1 Isaac Sim onboarding deliverable: standalone scripted scene.
+- Confirmed the default Isaac Sim Python experience crashes from SSH/headless startup in UI/hotkey setup.
+- Added a minimal headless Kit experience at `configs/isaac/hello_world_headless.kit` to avoid GUI/menu startup.
+- Verified `src/robot_control/test.py` creates a `World`, adds a ground plane, table cuboid, dynamic cube, and Franka USD reference.
+- Ran `python src\robot_control\test.py`; the script reset the world, stepped simulation headlessly, closed Isaac Sim, and exited with code 0.
