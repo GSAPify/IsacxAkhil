@@ -1,0 +1,19 @@
+{
+  "venvPath": ".",
+  "venv": "env_isaacsim",
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic",
+  "include": [
+    "src",
+    "scripts",
+    "notebooks"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "env_isaacsim",
+    "rust",
+    "data",
+    "models"
+  ],
+  "reportMissingImports": "warning"
+}

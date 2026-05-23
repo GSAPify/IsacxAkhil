@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false, reportCallIssue=false
 """Capture a single RGB-D frame and 6-DoF object pose for a YCB asset.
 
 Phase 1 deliverable from ``README.md``: replace primitives with a YCB USD
@@ -22,12 +23,21 @@ import json
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Tuple
 
 import numpy as np
 
 from isaacsim import SimulationApp
+# Isaac Sim modules must be imported only after SimulationApp init.
+import cv2
+from scipy.spatial.transform import Rotation
 
+from isaacsim.core.api import World
+from isaacsim.core.api.objects import FixedCuboid
+from isaacsim.core.prims import XFormPrim
+from isaacsim.core.utils.stage import add_reference_to_stage
+from isaacsim.sensors.camera import Camera
+from isaacsim.storage.native import get_assets_root_path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_RAW = REPO_ROOT / "data" / "raw"
@@ -70,7 +80,7 @@ class CaptureMetadata:
     asset_root: str
 
 
-simulation_app = SimulationApp(
+simulation_app: Any = SimulationApp(  # type: ignore[reportCallIssue]
     {
         "headless": True,
         "hide_ui": True,
@@ -80,16 +90,7 @@ simulation_app = SimulationApp(
     }
 )
 
-# Isaac Sim modules must be imported only after SimulationApp init.
-import cv2
-from scipy.spatial.transform import Rotation
 
-from isaacsim.core.api import World
-from isaacsim.core.api.objects import FixedCuboid
-from isaacsim.core.prims import XFormPrim
-from isaacsim.core.utils.stage import add_reference_to_stage
-from isaacsim.sensors.camera import Camera
-from isaacsim.storage.native import get_assets_root_path
 
 
 def main() -> None:
@@ -157,8 +158,17 @@ def main() -> None:
     depth_mm = _frame_to_depth_mm_uint16(frame)
 
     object_positions, object_orientations = ycb.get_world_poses()
-    object_pos_xyz = tuple(float(x) for x in object_positions[0])
-    object_ori_wxyz = tuple(float(x) for x in object_orientations[0])
+    object_pos_xyz: Tuple[float, float, float] = (
+        float(object_positions[0][0]),
+        float(object_positions[0][1]),
+        float(object_positions[0][2]),
+    )
+    object_ori_wxyz: Tuple[float, float, float, float] = (
+        float(object_orientations[0][0]),
+        float(object_orientations[0][1]),
+        float(object_orientations[0][2]),
+        float(object_orientations[0][3]),
+    )
 
     capture_dir = _make_capture_dir()
     cv2.imwrite(str(capture_dir / "rgb.png"), cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR))
