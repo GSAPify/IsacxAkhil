@@ -28,16 +28,7 @@ from typing import Any, Tuple
 import numpy as np
 
 from isaacsim import SimulationApp
-# Isaac Sim modules must be imported only after SimulationApp init.
-import cv2
-from scipy.spatial.transform import Rotation
 
-from isaacsim.core.api import World
-from isaacsim.core.api.objects import FixedCuboid
-from isaacsim.core.prims import XFormPrim
-from isaacsim.core.utils.stage import add_reference_to_stage
-from isaacsim.sensors.camera import Camera
-from isaacsim.storage.native import get_assets_root_path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_RAW = REPO_ROOT / "data" / "raw"
@@ -90,7 +81,15 @@ simulation_app: Any = SimulationApp(  # type: ignore[reportCallIssue]
     }
 )
 
+import cv2
+from scipy.spatial.transform import Rotation
 
+from isaacsim.core.api import World
+from isaacsim.core.api.objects import FixedCuboid
+from isaacsim.core.prims import XFormPrim
+from isaacsim.core.utils.stage import add_reference_to_stage
+from isaacsim.sensors.camera import Camera
+from isaacsim.storage.native import get_assets_root_path
 
 
 def main() -> None:
