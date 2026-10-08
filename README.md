@@ -19,8 +19,9 @@ The benchmark/data source to keep anchored in this repo is the [YCB Object and M
 | [`docs/results/`](docs/results/) | Evaluation tables, latency numbers, and result notes. |
 | [`docs/VISION_PIPELINE.md`](docs/VISION_PIPELINE.md) | Python ↔ ONNX ↔ Rust responsibilities and commands. |
 | [`notebooks/`](notebooks/) | Sanity-check notebooks for data and pose visualization. |
-| [`scripts/`](scripts/) | Utilities (e.g. YOLO → ONNX export, GPU stress test). |
-| [`src/`](src/) | Future Python package code for simulation, data, training, and tracking. |
+| [`scripts/`](scripts/) | Utilities (e.g. YOLO → ONNX export, GPU stress test). [`scripts/sim/`](scripts/sim/) holds Isaac Sim entry points such as the headless Franka scene smoke test. |
+| [`src/isaacx/`](src/isaacx/) | Python package. Today: the typed config loader (`isaacx.config`). Simulation, data, training and tracking code lands here as each phase starts. |
+| [`tests/`](tests/) | Pytest suite for `isaacx`; runs without Isaac Sim, torch or a GPU. |
 | [`rust/`](rust/) | Cargo workspace; [`vision-inference`](rust/crates/vision-inference) loads exported ONNX models. |
 
 Large or generated artifacts (`*.onnx`, `*.pt`, local venvs, build outputs) are listed in [`.gitignore`](.gitignore).
@@ -63,6 +64,28 @@ rustc --version
 cargo --version
 cd G:\Robotics\rust
 cargo build -p vision-inference --release
+```
+
+## Development
+
+The `isaacx` package and its tests need only Python 3.11, not Isaac Sim, torch or a GPU, so
+they run anywhere (and in CI on Ubuntu and Windows):
+
+```powershell
+python -m pip install -e ".[dev]"
+ruff check .
+pyright
+pytest
+```
+
+Load the config in code with `isaacx.config.load_config("configs/default.yaml")`. Unknown keys,
+thresholds outside `[0, 1]` and an `imgsz` that is not a multiple of 32 fail at load time.
+
+The headless Franka scene smoke test (the Phase 1 check from `LOG.md`) needs the Isaac Sim venv:
+
+```powershell
+.\activate.ps1
+python scripts\sim\franka_scene_smoke.py
 ```
 
 ## Quick start
