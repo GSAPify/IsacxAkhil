@@ -1,0 +1,34 @@
+name: Rust
+
+on:
+  push:
+    branches: [main]
+    paths: ["rust/**", ".github/workflows/rust.yml"]
+  pull_request:
+    paths: ["rust/**", ".github/workflows/rust.yml"]
+
+defaults:
+  run:
+    working-directory: rust
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows is the real target (the workstation); Linux keeps it portable.
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      # Unit tests cover the pure preprocessing and decoding code. `ort` uses `load-dynamic`,
+      # so nothing here needs the ONNX Runtime library.
+      - run: cargo test --workspace --locked

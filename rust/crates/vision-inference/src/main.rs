@@ -1,32 +1,67 @@
+//! Run an exported YOLOv8 ONNX model on an image and print the detections as JSON.
+//!
+//! Without `--image`, runs one zero tensor through the model and logs its output shapes, which
+//! is a quick check that the model loads and executes.
+
+use std::path::{Path, PathBuf};
+use std::time::Instant;
+
 use anyhow::{Context, Result};
 use clap::Parser;
-use image::imageops::FilterType;
 use ndarray::Array4;
 use ort::session::Session;
 use ort::value::Tensor;
-use std::path::PathBuf;
+use serde::Serialize;
+use vision_inference::postprocess::{decode_yolov8, nms, Detection};
+use vision_inference::preprocess::preprocess;
 
 #[derive(Parser, Debug)]
 #[command(
     name = "vision-inference",
-    about = "ONNX Runtime node for exported YOLO / vision models (Rust inference path)"
+    about = "Run an exported YOLOv8 ONNX model and print detections as JSON"
 )]
 struct Args {
-    /// Path to ONNX model (export from Python with scripts/export_yolo_onnx.py)
+    /// Path to the ONNX model (export with scripts/export_yolo_onnx.py)
     #[arg(long)]
     model: PathBuf,
 
-    /// Optional image; if omitted, runs a single dummy tensor through the model
+    /// Image to run detection on; if omitted, runs one zero tensor as a smoke test
     #[arg(long)]
     image: Option<PathBuf>,
 
-    /// Letterbox square size (typical YOLO export: 640)
-    #[arg(long, default_value_t = 640_u32)]
+    /// Square model input size used at export time
+    #[arg(long, default_value_t = 640)]
     size: u32,
+
+    /// Minimum class score to keep a detection (configs/default.yaml: detection.confidence_threshold)
+    #[arg(long, default_value_t = 0.5)]
+    conf: f32,
+
+    /// IoU above which same-class boxes are suppressed (configs/default.yaml: detection.nms_threshold)
+    #[arg(long, default_value_t = 0.45)]
+    iou: f32,
+}
+
+#[derive(Serialize)]
+struct Report {
+    image: String,
+    width: u32,
+    height: u32,
+    detections: Vec<Detection>,
+    timings_ms: Timings,
+}
+
+#[derive(Serialize)]
+struct Timings {
+    preprocess: f64,
+    inference: f64,
+    postprocess: f64,
 }
 
 fn main() -> Result<()> {
+    // Logs go to stderr so stdout stays clean JSON.
     tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
@@ -35,63 +70,81 @@ fn main() -> Result<()> {
 
     let args = Args::parse();
 
-    ort::init()
-        .with_name("vision-inference")
-        .commit();
+    ort::init().with_name("vision-inference").commit();
 
     let mut session = Session::builder()?
         .commit_from_file(&args.model)
         .with_context(|| format!("load ONNX model from {:?}", args.model))?;
 
-    let input = if let Some(path) = &args.image {
-        preprocess_image(path, args.size).context("preprocess image")?
-    } else {
-        tracing::info!("no --image; running zeros tensor shaped for common YOLO ONNX (1,3,640,640)");
-        Array4::<f32>::zeros((1, 3, args.size as usize, args.size as usize))
-    };
+    match &args.image {
+        Some(path) => detect(&mut session, path, &args),
+        None => smoke_run(&mut session, args.size),
+    }
+}
 
-    let input_tensor = Tensor::from_array(input.into_dyn())
-        .context("build input tensor")?;
+fn detect(session: &mut Session, path: &Path, args: &Args) -> Result<()> {
+    let image = image::open(path)
+        .with_context(|| format!("open {path:?}"))?
+        .to_rgb8();
+
+    let started = Instant::now();
+    let (input, letterbox) = preprocess(&image, args.size);
+    let preprocessed = Instant::now();
+
     let outputs = session
-        .run(ort::inputs![input_tensor])
+        .run(ort::inputs![
+            Tensor::from_array(input.into_dyn()).context("build input tensor")?
+        ])
+        .context("ONNX Runtime session.run")?;
+    let inferred = Instant::now();
+
+    let (shape, data) = outputs[0]
+        .try_extract_tensor::<f32>()
+        .context("model output 0 is not an f32 tensor")?;
+    let dims = shape
+        .iter()
+        .map(|&d| usize::try_from(d))
+        .collect::<Result<Vec<_>, _>>()
+        .context("model output has a negative dimension")?;
+    let mut detections = nms(decode_yolov8(&dims, data, args.conf)?, args.iou);
+    for det in &mut detections {
+        let (x1, y1) = letterbox.to_original(det.bbox[0], det.bbox[1]);
+        let (x2, y2) = letterbox.to_original(det.bbox[2], det.bbox[3]);
+        det.bbox = [x1, y1, x2, y2];
+    }
+    let postprocessed = Instant::now();
+
+    let ms = |from: Instant, to: Instant| (to - from).as_secs_f64() * 1000.0;
+    let report = Report {
+        image: path.display().to_string(),
+        width: image.width(),
+        height: image.height(),
+        detections,
+        timings_ms: Timings {
+            preprocess: ms(started, preprocessed),
+            inference: ms(preprocessed, inferred),
+            postprocess: ms(inferred, postprocessed),
+        },
+    };
+    println!("{}", serde_json::to_string_pretty(&report)?);
+    Ok(())
+}
+
+fn smoke_run(session: &mut Session, size: u32) -> Result<()> {
+    tracing::info!("no --image; running one zero tensor shaped (1, 3, {size}, {size})");
+    let input = Array4::<f32>::zeros((1, 3, size as usize, size as usize));
+    let outputs = session
+        .run(ort::inputs![
+            Tensor::from_array(input.into_dyn()).context("build input tensor")?
+        ])
         .context("ONNX Runtime session.run")?;
 
     tracing::info!("output tensors: {}", outputs.len());
     for (i, (name, value)) in outputs.iter().enumerate() {
         match value.try_extract_tensor::<f32>() {
-            Ok((shape, _data)) => tracing::info!("  output[{}] ({}): shape {:?}", i, name, shape),
-            Err(_) => tracing::info!("  output[{}] ({}): (could not extract as f32 tensor)", i, name),
+            Ok((shape, _)) => tracing::info!("  output[{i}] ({name}): shape {shape:?}"),
+            Err(_) => tracing::info!("  output[{i}] ({name}): not an f32 tensor"),
         }
     }
-
     Ok(())
-}
-
-/// RGB, float32, NCHW, values in [0, 1], letterboxed to `size` x `size`.
-fn preprocess_image(path: &PathBuf, size: u32) -> Result<Array4<f32>> {
-    let img = image::open(path).with_context(|| format!("open {:?}", path))?;
-    let rgb = img.to_rgb8();
-    let (w, h) = rgb.dimensions();
-    let scale = (size as f32 / w as f32).min(size as f32 / h as f32);
-    let nw = (w as f32 * scale).round() as u32;
-    let nh = (h as f32 * scale).round() as u32;
-    let resized = image::imageops::resize(&rgb, nw, nh, FilterType::Triangle);
-    let mut canvas = image::RgbImage::new(size, size);
-    let ox = (size - nw) / 2;
-    let oy = (size - nh) / 2;
-    for y in 0..nh {
-        for x in 0..nw {
-            canvas.put_pixel(ox + x, oy + y, *resized.get_pixel(x, y));
-        }
-    }
-    let mut arr = Array4::<f32>::zeros((1, 3, size as usize, size as usize));
-    for y in 0..size {
-        for x in 0..size {
-            let p = canvas.get_pixel(x, y);
-            arr[[0, 0, y as usize, x as usize]] = p[0] as f32 / 255.0;
-            arr[[0, 1, y as usize, x as usize]] = p[1] as f32 / 255.0;
-            arr[[0, 2, y as usize, x as usize]] = p[2] as f32 / 255.0;
-        }
-    }
-    Ok(arr)
 }
