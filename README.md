@@ -123,4 +123,5 @@ If the schedule slips, cut in this order: full Rust inference, multi-object trac
 
 ## License
 
-See crate and workspace metadata in [`rust/Cargo.toml`](rust/Cargo.toml) (SPDX: `MIT OR Apache-2.0`).
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT), at
+your option (SPDX: `MIT OR Apache-2.0`, as declared in [`rust/Cargo.toml`](rust/Cargo.toml)).
