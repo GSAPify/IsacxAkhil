@@ -81,13 +81,36 @@ Export YOLO weights to ONNX (writes under `models/`; ensure that directory exist
 python scripts\export_yolo_onnx.py --weights yolov8n.pt --out models\yolov8n.onnx
 ```
 
-Build and run the Rust inference binary:
+Build and run the Rust inference binary. It loads ONNX Runtime at runtime (`load-dynamic`), so
+point `ORT_DYLIB_PATH` at the library that the `onnxruntime` pip package installed:
 
 ```powershell
 cd rust
 cargo build -p vision-inference --release
+$env:ORT_DYLIB_PATH = "..\env_isaacsim\Lib\site-packages\onnxruntime\capi\onnxruntime.dll"
 .\target\release\vision-inference.exe --model ..\models\yolov8n.onnx --image path\to\image.png
 ```
+
+It prints JSON to stdout (logs go to stderr): detections in original-image pixels plus
+per-stage timings. `--conf` and `--iou` default to `configs/default.yaml`'s
+`confidence_threshold` and `nms_threshold`. Without `--image` it runs one zero tensor as a smoke
+test. Trimmed output for Ultralytics' sample `bus.jpg` with `yolov8n` (CPU):
+
+```json
+{
+  "image": "bus.jpg",
+  "width": 810,
+  "height": 1080,
+  "detections": [
+    { "class_id": 0, "score": 0.8894, "bbox": [670.4, 380.1, 809.9, 879.6] }
+  ],
+  "timings_ms": { "preprocess": 2.6, "inference": 19.8, "postprocess": 0.3 }
+}
+```
+
+Preprocessing and decoding match Ultralytics: on that image the Rust binary returns the same
+four detections as `YOLO(...).predict()`, with every box within 0.7 px and every score within
+0.002.
 
 More detail: [`docs/VISION_PIPELINE.md`](docs/VISION_PIPELINE.md).
 
