@@ -1,9 +1,7 @@
 from pathlib import Path
 
 import numpy as np
-
 from isaacsim import SimulationApp
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HEADLESS_EXPERIENCE = REPO_ROOT / "configs" / "isaac" / "hello_world_headless.kit"

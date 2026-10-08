@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "isaacx"
+version = "0.1.0"
+description = "Sim-to-real 6-DoF object pose estimation around Isaac Sim"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT OR Apache-2.0"
+# Core package only. Isaac Sim, torch and Ultralytics live in the Isaac Sim venv
+# (see requirements.txt) and are not needed to import or test this package.
+dependencies = ["pydantic>=2", "pyyaml>=6"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "pyright>=1.1.380", "types-PyYAML"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/isaacx"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+# Never lint the Isaac Sim venv that lives at the repo root on the workstation.
+extend-exclude = ["env_isaacsim", "rust", "scripts/gpu_stress_test.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# SimulationApp must be created before any isaacsim.core import, so imports follow code.
+"scripts/sim/*" = ["E402"]
+
+[tool.pyright]
+include = ["src", "tests"]
+exclude = ["env_isaacsim", ".venv", "rust"]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
