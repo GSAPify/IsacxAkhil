@@ -23,3 +23,8 @@ Append-only daily/session log for the robotics perception project. Keep entries 
 - Added a minimal headless Kit experience at `configs/isaac/hello_world_headless.kit` to avoid GUI/menu startup.
 - Verified `src/robot_control/test.py` creates a `World`, adds a ground plane, table cuboid, dynamic cube, and Franka USD reference.
 - Ran `python src\robot_control\test.py`; the script reset the world, stepped simulation headlessly, closed Isaac Sim, and exited with code 0.
+
+## 2026-10-25
+
+- Proposed toss-to-bin as a Phase 7 extension (ADR 003): soft YCB balls thrown into bins, release velocity from ballistics plus a learned residual, inspired by TossingBot.
+- Wrote the slice plan in `docs/TOSS_TO_BIN.md`. Slices 1-3 (ballistics, back-projection, residual on a toy simulator) need no Isaac Sim; slices 4-6 run on the workstation.
