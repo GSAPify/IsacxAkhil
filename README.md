@@ -8,6 +8,8 @@ Build a portfolio-grade sim-to-real 6-DoF object pose estimation stack around Is
 
 The benchmark/data source to keep anchored in this repo is the [YCB Object and Model Set](http://ycb-benchmarks.s3-website-us-east-1.amazonaws.com/). Use 3-5 physical YCB counterparts for sim-to-real evaluation; good first objects are `003_cracker_box`, `004_sugar_box`, `006_mustard_bottle`, `010_potted_meat_can`, and `035_power_drill`.
 
+Stretch goal: use the pose output to toss soft YCB balls into bins with a ballistic estimate plus a learned residual. See [`docs/TOSS_TO_BIN.md`](docs/TOSS_TO_BIN.md) and [ADR 003](docs/decisions/003-toss-to-bin.md). It is the first thing cut if the schedule slips.
+
 ## Repository layout
 
 | Path | Purpose |
