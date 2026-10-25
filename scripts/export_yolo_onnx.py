@@ -1,12 +1,14 @@
+"""Export a YOLO weights file to ONNX for the Rust vision-inference node (Python side)."""
+
 import argparse
 from pathlib import Path
-
-"""Export a YOLO weights file to ONNX for the Rust vision-inference node (Python side)."""
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export Ultralytics YOLO to ONNX")
-    parser.add_argument("--weights", default="yolov8n.pt", help="Weights path or hub id (e.g. yolov8n.pt)")
+    parser.add_argument(
+        "--weights", default="yolov8n.pt", help="Weights path or hub id (e.g. yolov8n.pt)"
+    )
     parser.add_argument("--out", default="models/yolov8n.onnx", help="Output ONNX path")
     parser.add_argument("--imgsz", type=int, default=640, help="Square export size")
     parser.add_argument("--opset", type=int, default=12, help="ONNX opset")
